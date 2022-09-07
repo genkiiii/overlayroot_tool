@@ -1,0 +1,120 @@
+#!/bin/sh
+#    Modified from overlayroot-chroot by Genki Yamauchi, 2022/09
+#    			overlayroot-chroot - chroot wrapper script for overlayroot
+#    			Copyright (C) 2012 Dustin Kirkland <kirkland@ubuntu.com>
+#    			Authors: Dustin Kirkland <kirkland@ubuntu.com>
+
+set -e
+set -f # disable path expansion
+REMOUNTS=""
+
+error() {
+	printf "ERROR: $@\n" 1>&2
+}
+fail() { [ $# -eq 0 ] || error "$@"; exit 1; }
+
+info() {
+	printf "INFO: $@\n" 1>&2
+}
+
+
+usage() {
+	printf "Usage: ${0##*/} <file1_name> <file2_anme> ...\r\n" 1>&2
+	printf "Both absolute path and relative path is ok for the file_name\r\n" 1>&2
+}
+
+if [ ! $# -gt 0 ]; then
+		error "No argument for syncing"
+    usage
+		fail
+fi
+
+get_lowerdir() {
+	local overlay=""
+	overlay=$(awk \
+		'$1 == "overlayroot" && $2 == "/" { print $0 }' /proc/mounts)
+	if [ -n "${overlay}" ]; then
+		lowerdir=${overlay##*lowerdir=}
+		lowerdir=${lowerdir%%,*}
+		if mountpoint "${lowerdir}" >/dev/null; then
+			_RET="${lowerdir}"
+		else
+			fail "Unable to find the overlayroot lowerdir"
+		fi
+	else
+		fail "Unable to find an overlayroot filesystem"
+	fi
+}
+
+clean_exit() {
+	local mounts="$1" rc=0 d="" lowerdir="" mp=""
+	for d in ${mounts}; do
+		if mountpoint ${d} >/dev/null; then
+			umount ${d} || rc=1
+		fi
+	done
+	for mp in $REMOUNTS; do
+		mount -o remount,ro "${mp}" ||
+			error "Note that [${mp}] is still mounted read/write"
+	done
+	[ "$2" = "return" ] && return ${rc} || exit ${rc}
+}
+
+# Try to find the overlayroot filesystem
+get_lowerdir
+lowerdir=${_RET}
+
+recurse_mps=$(awk '$1 ~ /^\/dev\// && $2 ~ starts { print $2 }' \
+	starts="^$lowerdir/" /proc/mounts)
+
+mounts=
+for d in proc run sys; do
+	if ! mountpoint "${lowerdir}/${d}" >/dev/null; then
+		mount -o bind "/${d}" "${lowerdir}/${d}" || fail "Unable to bind /${d}"
+		mounts="$mounts $lowerdir/$d"
+		trap "clean_exit \"${mounts}\" || true" EXIT HUP INT QUIT TERM
+	fi
+done
+
+# Remount with read/write
+for mp in "$lowerdir" $recurse_mps; do
+	mount -o remount,rw "${mp}" &&
+		REMOUNTS="$mp $REMOUNTS" ||
+		fail "Unable to remount [$mp] writable"
+done
+
+# rsync 
+echo "lowerdir is ${lowerdir}"
+echo $@
+
+for file in $@
+do
+    ap_file=null
+    case $file in
+      /*) echo "absolute path"
+      ap_file=$file;;
+      *) echo "maybe relative path"
+          echo "change to absolute path"
+          ap_file="${PWD}/${file}"
+          echo $ap_file;;
+    esac
+
+    # If last charactor is "/", it is removed for rsync.
+    case $file in
+      */) ap_file=${ap_file%?};;
+    esac
+
+    if [ -e ${ap_file} ]; then
+      echo "syncing ${ap_file} to ${lowerdir}${ap_file}"
+      rsync -av --delete ${ap_file} "${lowerdir}${ap_file}"
+    else
+      error "${file} does not exist"
+    fi
+done
+
+
+# Clean up mounts on exit
+clean_exit "${mounts}" "return"
+trap "" EXIT HUP INT QUIT TERM
+
+# vi: ts=4 noexpandtab
