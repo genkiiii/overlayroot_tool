@@ -1,5 +1,5 @@
 install:
-	sudo cp overlayroot_sync /usr/local/sbin/
+	sudo cp overlayroot-sync /usr/local/sbin/
 
 uninstall:
-	sudo rm /usr/local/sbin/overlayroot_sync
+	sudo rm /usr/local/sbin/overlayroot-sync
