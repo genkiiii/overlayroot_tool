@@ -84,37 +84,32 @@ for mp in "$lowerdir" $recurse_mps; do
 done
 
 # rsync 
-echo "lowerdir is ${lowerdir}"
-echo $@
-
-for file in $@
+for path in $@
 do
-    ap_file=null
-    case $file in
-      /*) echo "absolute path"
-      ap_file=$file;;
-      *) echo "maybe relative path"
-          echo "change to absolute path"
-          ap_file="${PWD}/${file}"
-          echo $ap_file;;
-    esac
+	absolute_path=null
+	case $path in
+		/*) absolute_path=$path;;# $path is absolute
+		*) absolute_path="${PWD}/${path}";;# $path is relative
+	esac
 
-    # If last charactor is "/", it is removed for rsync.
-    case $file in
-      */) ap_file=${ap_file%?};;
-    esac
+	# If last charactor is "/", it is removed for rsync.
+	case $path in
+		*/) absolute_path=${absolute_path%?};;
+	esac
 
-    if [ -e ${ap_file} ]; then
-      echo "syncing ${ap_file} to ${lowerdir}${ap_file}"
-      rsync -av --delete ${ap_file} "${lowerdir}${ap_file}"
-    else
-      error "${file} does not exist"
-    fi
+	if [  -e $absolute_path ]; then # confirm path existance
+		if [  -f $absolute_path ]; then
+			# file copy
+			rsync -av --delete ${absolute_path} "${lowerdir}${absolute_path}"
+		elif [  -d $absolute_path ]; then
+			# directory copy
+			rsync -av --delete "${absolute_path}/" "${lowerdir}${absolute_path}"
+		fi
+	else
+		error "${absolute_path} does not exist"
+	fi
 done
-
 
 # Clean up mounts on exit
 clean_exit "${mounts}" "return"
 trap "" EXIT HUP INT QUIT TERM
-
-# vi: ts=4 noexpandtab
