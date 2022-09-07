@@ -8,7 +8,7 @@ overlayroot自体は[こちら](https://packages.ubuntu.com/jammy/overlayroot)�
 
 インストール方法：
 ```
- git clone https://github.com/genkiiii/overlayroot_tool
+ git clone https://github.com/genkiiii/overlayroot_tool.git
  cd overlayroot_tool
  make install
 ```
