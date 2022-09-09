@@ -100,10 +100,10 @@ do
 	if [  -e $absolute_path ]; then # confirm path existance
 		if [  -f $absolute_path ]; then
 			# file copy
-			rsync -av --delete ${absolute_path} "${lowerdir}${absolute_path}"
+			rsync -av --mkpath --delete ${absolute_path} "${lowerdir}${absolute_path}"
 		elif [  -d $absolute_path ]; then
 			# directory copy
-			rsync -av --delete "${absolute_path}/" "${lowerdir}${absolute_path}"
+			rsync -av --mkpath --delete "${absolute_path}/" "${lowerdir}${absolute_path}"
 		fi
 	else
 		error "${absolute_path} does not exist"
