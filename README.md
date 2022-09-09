@@ -16,3 +16,7 @@ overlayroot自体は[こちら](https://packages.ubuntu.com/jammy/overlayroot)�
 ```
  sudo overlayroot-sync <file1 path> <file2 path> <directory1 path>...
 ```
+カレントディレクトリ以下を保存したい場合：
+```
+ sudo overlayroot-sync ./
+```
