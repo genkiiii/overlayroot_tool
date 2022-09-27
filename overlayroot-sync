@@ -100,10 +100,11 @@ do
 	if [  -e $absolute_path ]; then # confirm path existance
 		if [  -f $absolute_path ]; then
 			# file copy
-			rsync -av --mkpath --delete ${absolute_path} "${lowerdir}${absolute_path}"
+
+			rsync -av --mkpath --delete --exclude-from='/usr/local/share/overlayroot-sync/exclude_list' ${absolute_path} "${lowerdir}${absolute_path}"
 		elif [  -d $absolute_path ]; then
 			# directory copy
-			rsync -av --mkpath --delete "${absolute_path}/" "${lowerdir}${absolute_path}"
+			rsync -av --mkpath --delete --exclude-from='/usr/local/share/overlayroot-sync/exclude_list' "${absolute_path}/" "${lowerdir}${absolute_path}"
 		fi
 	else
 		error "${absolute_path} does not exist"
