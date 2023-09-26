@@ -8,9 +8,10 @@ overlayroot自体は[こちら](https://packages.ubuntu.com/jammy/overlayroot)�
 
 ### インストール方法
 ```
+ sudo apt install overlayroot （overlayroot自体のインストール）
  git clone https://github.com/genkiiii/overlayroot_tool.git
  cd overlayroot_tool
- make install
+ sudo make install
 ```
 ### 使い方
 ```
@@ -24,6 +25,7 @@ overlayroot自体は[こちら](https://packages.ubuntu.com/jammy/overlayroot)�
 ### Tips
 - apt updateやapt install等をしたい場合は、overlayrootに付属しているシェルスクリプト（overlayroot-chroot）を利用する。overlayroot-chrootは、ready-writeに再マウントして、ルートフォルダを変更するシェルスクリプト。
 - overlayrootを無効にしたい場合、/etc/overlayroot.confを開き、overlayroot=""とした後、/etc/overlayroot.confをoverlayroot-syncで保存して、再起動する。
+- overlayrootを有効にしたい場合、/etc/overlayroot.confを開き、overlayroot="tmpfs"とした後、再起動する。
 
 ### 除外ファイル
 overlayrootにより展開されたファイル(fstab)などを、overlayroot-syncを使いread-only下に保存するとマウント情報が変わってしまう。
